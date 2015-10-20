@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <title></title>
+    <meta name="description" content="Description">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
+    <style>
+
+      html {
+        box-sizing: border-box;
+      }
+
+      *, *:before, *:after {
+        margin: 0;
+        box-sizing: inherit;
+      }
+
+      html, body {
+        width: 100%;
+        height: 100%;
+      }
+
+      body {
+        background-color: #003b59;
+        font-family: 'Open Sans', sans-serif;
+        color: white;
+        font-size: 16px;
+      } 
+
+      #game {
+          display: block;
+          background-color: #c3983a;
+      }
+    </style>
+</head>
+
+<body>
+  <canvas id="game" width="400" height="400"></canvas>
+</body>
+<script>
+
+(function(){
+
+var events = (function(){
+  var topics = {};
+  var hOP = topics.hasOwnProperty;
+
+  return {
+    subscribe: function(topic, listener) {
+      // Create the topic's object if not yet created
+      if(!hOP.call(topics, topic)) topics[topic] = [];
+
+      // Add the listener to queue
+      var index = topics[topic].push(listener) -1;
+
+      // Provide handle back for removal of topic
+      return {
+        remove: function() {
+          delete topics[topic][index];
+        }
+      };
+    },
+    publish: function(topic, info) {
+      // If the topic doesn't exist, or there's no listeners in queue, just leave
+      if(!hOP.call(topics, topic)) return;
+
+      // Cycle through topics queue, fire!
+      topics[topic].forEach(function(item) {
+          item(info != undefined ? info : {});
+      });
+    }
+  };
+})();
+
+function Game(canvas) {
+  
+  var self = this;
+
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  this.width = canvas.width;
+  this.height = canvas.height;
+  this.context = canvas.getContext('2d');
+
+  this.player1 = new Paddle(0, 0);
+
+  this.player2 = new Paddle(canvas.width - 10, 0);
+
+  //subscribe to events
+  this.subscription = events.subscribe('keydown', function(e) {
+    self.player1.update(5);
+  });
+
+  //draw
+}
+
+Game.prototype.draw = function() {
+
+  this.context.clearRect(0, 0, this.width, this.height);
+
+  this.player1.draw(this.context);
+  this.player2.draw(this.context);
+
+};
+
+Game.prototype.update = function() {
+
+  // this.player1.update(30);
+
+  // this.player2.update(50);
+
+};
+
+
+/* Paddle */
+
+function Paddle(x, y) {
+  this.x = x;
+  this.y = y;
+  this.width = 10;
+  this.height = 40;
+
+  this.color = 'brown';
+}
+
+Paddle.prototype.draw = function(c) {
+  c.fillStyle = this.color;
+  c.fillRect(this.x, this.y, this.width, this.height);
+};
+
+Paddle.prototype.update = function(y) {
+  this.y += y;
+};
+
+
+
+
+function loop() {
+  game.update();
+  game.draw();
+}
+
+
+document.addEventListener('keydown', function(e) {
+  events.publish('keydown', e);
+});
+
+
+var game = new Game(document.getElementById('game'));
+
+setInterval(loop, 33);
+
+})();
+
+</script>
+</html>
